@@ -15,13 +15,74 @@ app.use(express.json());
 await connectDB(process.env.MONGO_URL);
 
 // api/songs (Read all songs)
+app.get("/api/songs", async (req, res) => {
+  try {
+    const songs = await Song.find().sort({ createdAt: -1 });
+    res.json(songs.map(s => ({
+      id: s._id,
+      title: s.title,
+      artist: s.artist,
+      year: s.year
+    })));
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch songs" });
+  }
+});
 
 
 // api/songs (Insert song)
+app.post("/api/songs", async (req, res) => {
+  try {
+    const { title, artist, year } = req.body;
+    if (!title || !artist) {
+      return res.status(400).json({ error: "Title and artist are required" });
+    }
+    const song = await Song.create({ title, artist, year });
+    res.status(201).json({
+      id: song._id,
+      title: song.title,
+      artist: song.artist,
+      year: song.year
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create song" });
+  }
+});
+
+
 
 // /api/songs/:id (Update song)
-
+app.put("/api/songs/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, artist, year } = req.body;
+    const updated = await Song.findByIdAndUpdate(
+      id,
+      { title, artist, year },
+      { new: true, runValidators: true }
+    );
+    if (!updated) return res.status(404).json({ error: "Song not found" });
+    res.json({
+      id: updated._id,
+      title: updated.title,
+      artist: updated.artist,
+      year: updated.year
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update song" });
+  }
+});
 
 // /api/songs/:id (Delete song)
+app.delete("/api/songs/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Song.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: "Song not found" });
+    res.json({ message: "Song deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete song" });
+  }
+});
 
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));

@@ -5,9 +5,15 @@
  *    - Export connectDB() that connects Mongoose using MONGO_URL
  *    - Log success; throw on failure
  */
+// server/db.js
 import mongoose from "mongoose";
 
-export async function connectDB(url) {
-  await mongoose.connect(url);
-  console.log("[DB] Mongo connected");
-}
+export const connectDB = async (url) => {
+  try {
+    await mongoose.connect(url);
+    console.log("Mongo connected");
+  } catch (err) {
+    console.error("Connection error:", err.message);
+  }
+};
+
